@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project basedir="." default="antwar" name="antTs">
+	<property name="source" location="src" />
+	<property name="resource" location="resource" />
+	<property name="test-srouce" location="test" />
+	<property name="release-resource" location="release" />
+	<property name="dest" location="dest" />
+
+	<property name="webroot" location="${basedir}/WebContent"/>
+	<property name="tomcat-root" location="D:\apache-tomcat-7.0.53"/>
+
+	<target name="clean">
+		<echo message="清理生成过程中的临时文件" />
+		<delete dir="${tomcat-root}/webapps/antTs" />
+		<delete dir="${webroot}/WEB-INF/classes" />
+		<delete dir="${dest}" />
+	</target>
+
+	<target name="prepare" depends="clean">
+		<mkdir dir="${webroot}/WEB-INF/classes"/>
+		<mkdir dir="${dest}" />
+	</target>
+
+	<target name="build" depends="prepare">
+		<echo message="编译Java源代码" />
+		<javac destdir="${webroot}/WEB-INF/classes" srcdir="${source}">
+			<sourcepath path="${test-srouce}" />
+			<classpath>
+				<fileset dir="${tomcat-root}/lib">
+					<include name="**/*.jar"/>
+				</fileset>
+				<fileset dir="${webroot}/WEB-INF/lib">
+					<include name="**/*.jar"/>
+				</fileset>
+			</classpath>
+		</javac>
+	</target>
+
+	<target name="package" depends="build">
+		<echo message="将Web工程打包成war可部署文件格式" />
+		<copydir dest="${webroot}/WEB-INF/classes" src="${resource}" />
+		<copydir dest="${webroot}/WEB-INF/classes" src="${release-resource}" />
+		<war destfile="${dest}/bid.war"  basedir="${webroot}" webxml="${webroot}/WEB-INF/web.xml"/>
+	</target>
+
+	<target name="antwar" depends="package">
+		<echo message="开始部署BID系统到服务器上" />
+		<copy file="${dest}/bid.war" todir="${tomcat-root}/webapps" />
+		<echo message="停止tomcat服务器" />
+		<exec executable="${tomcat-root}/bin/shutdown.bat" />
+		<echo message="启动tomcat服务器" />
+		<exec executable="${tomcat-root}/bin/startup.bat" />
+		<echo message="部署BID系统完成" />
+	</target>
+</project>

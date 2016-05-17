@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+
+<html lang="en" xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <meta charset="utf-8" />
+    <title></title>
+    <script type="text/javascript">
+        function stopwatch() {
+            this.startTime = new Date();
+            this.endTime = new Date();
+        }
+
+        stopwatch.prototype.start = function () {
+            this.startTime = new Date();
+        }
+
+        stopwatch.prototype.stop = function () {
+            this.endTime = new Date();
+        }
+
+        stopwatch.prototype.totalMilliSeconds = function () {
+            return this.endTime.getTime() - this.startTime.getTime();
+        }
+
+        var LEVEL = 1;
+        var registerTimerId;
+        var recognizeTimerId;
+        var recognizing = false;
+        var totalLines = 0;
+
+        function onOpenDevice() {
+            var ret = AxVein.initVeinRegDevice();
+            if (ret == 0) {
+                enableControls(true);
+                alert("打开设备成功！");
+            } else {
+                alert("打开设备失败！");
+            }
+        }
+
+        function onCloseDevice() {
+            AxVein.unInitVeinRegDevice();
+            enableControls(false);
+        }
+
+        var LEVEL = 1;
+        var registerTimerId;
+        var recognizeTimerId;
+        var recognizing = false;
+        var totalLines = 0;
+        
+        function onRegister() {
+            var registeredVeinId =	new Date().getTime();
+
+            var index = 1;
+            registerTimerId = setInterval(function () {
+
+                var watcher = new stopwatch();
+                watcher.start();
+                if (register(registeredVeinId, index) === 0) {
+                    watcher.stop();
+                    alert(registeredVeinId + "第" + index + "枚手指注册成功");
+                    index++;
+                }
+            }, 500);
+        }
+        
+        function register(registeredVeinId, index) {
+            if (index > 3) {
+                clearInterval(registerTimerId);
+                alert("注册成功");
+            } else {
+                var ret = AxVein.veinRegister(registeredVeinId, index);
+                return ret;
+            }
+        }
+        //识别指纹
+        function onRecognize() {
+            if (!recognizing) {
+                recognizing = true;
+                var ret = AxVein.veinLoadData(LEVEL);
+                recognizeTimerId = setInterval("recognize()", 200);
+            } else {
+                recognizing = false;
+                clearInterval(recognizeTimerId);
+                AxVein.veinReleaseData();
+            } 
+        }
+
+        function recognize() {console.log("扫描指纹识别");
+            var watcher = new stopwatch();
+            watcher.start();
+            var ret = AxVein.veinRecognition();
+            var veinId = AxVein.getRecognizedVeinId();
+            watcher.stop();
+            if(veinId){
+            	console.log(veinId);
+            	recognizing = true;
+            }
+          //  alert((veinId ? veinId : "未识别到用户") + "<br/>");
+        }
+
+        function onDelete() {
+            var veinId = document.getElementById("veinId").value;
+            var ret = AxVein.veinDeleteData(veinId);
+            if (ret === 0) {
+                alert("删除成功！");
+            } else {
+                alert("删除失败！");
+            }
+        }
+
+        function enableControls(enabled) {
+            var enableString = enabled ? "" : "disabled";
+            var disableString = enabled ? "disabled" : "";
+            
+            document.getElementById("openButton").disabled = disableString;
+            document.getElementById("closeButton").disabled = enableString;
+            document.getElementById("registerButton").disabled = enableString;
+            document.getElementById("recognizeButton").disabled = enableString;
+            document.getElementById("getNamesButton").disabled = enableString;
+            document.getElementById("deleteButton").disabled = enableString;
+        }
+
+        function enableControlsForRegister(e) {
+            document.getElementById("closeButton").disabled = e;
+            document.getElementById("registerButton").disabled = e;
+            document.getElementById("recognizeButton").disabled = e;
+            document.getElementById("getNamesButton").disabled = e;
+            document.getElementById("deleteButton").disabled = e;
+        }
+
+        function enableControlsForRecognize(e) {
+            document.getElementById("closeButton").disabled = e;
+            document.getElementById("registerButton").disabled = e;
+            document.getElementById("getNamesButton").disabled = e;
+            document.getElementById("deleteButton").disabled = e;
+        }
+
+        function onTest() {
+            var failTimes = 0;
+            var succeed = true;
+            for (var i = 1; i <= 3;) {
+                if (0 == AxVein.veinRegisterReturnVeinData(i)) {
+                    i++;
+                } else
+                    failTimes++;
+                if (failTimes > 30) {
+                    break;
+                }
+            }
+
+            var veinData = AxVein.GetRegisteredVeinTemplate();
+
+            alert(veinData.length);
+
+            alert(AxVein.veinRecognitionOneFromDatabase(veinData));
+        }
+
+    </script>
+</head>
+<body>
+    <object id="AxVein" classid="clsid:D2F7E180-6824-4A06-82E6-9EF5872C91C5">
+
+    </object>
+    <div id="tip"></div>
+    <input type="button" id="openButton" value="打开设备" onclick="onOpenDevice();"/>
+    <input type="button" id="closeButton" value="关闭设备" onclick="onCloseDevice();" disabled/> <br/>
+    <input type="text" id="registerVeinId" />
+    <input type="button" id="registerButton" value="注册" onclick="onRegister();" disabled/>
+    <input type="button" id="recognizeButton" value="开始识别" onclick="onRecognize();" disabled/>
+    <input type="button" id="getNamesButton" value="获取用户列表" onclick="onGetNames();" disabled /><br/>
+    <input type="text" id="veinId" /> <input type="button" id="deleteButton" value="删除" onclick="onDelete();" disabled /><br/>
+    <input type="button" id="test" value="测试" onclick="onTest();" style="display:none;" />
+    <div id="recognizeHistory">
+
+    </div>
+</body>
+</html>
