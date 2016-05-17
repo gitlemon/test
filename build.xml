@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project basedir="." default="antwar" name="antTs">
+<project basedir="." default="antwar" name="test">
 	<!-- basedir表示当前项目基路径，default表示启动ant之后运行目标（必须的）,name表示项目发布后名称 -->
 	<!-- target表示运行目标，可以有多个target标签 ，也可以通过depends依赖其他目标  -->
 	<target name="init" description="初始化ant打包環境">
@@ -42,8 +42,8 @@
 	<target name="prepare" depends="init" description="拷贝所有文件到源文件到打包路径下">
 		<echo message="清理生成过程中的临时文件" />
 		<delete dir="${build.dir}" failonerror="false" />
-		<delete dir="${tomcat-root}/webapps/antTs" />
-		<delete dir="${tomcat-root}/webapps/antTs.war" />
+		<delete dir="${tomcat-root}/webapps/test" />
+		<delete dir="${tomcat-root}/webapps/test.war" />
 
 		<mkdir dir="${build.dir}"/>
 		<mkdir dir="${build.web.dir}"/>
@@ -68,10 +68,10 @@
 	<target name="main" depends="compile">
 	</target>
 	<target name="antwar" depends="main" description="开始工作了（打war包）">
-		<war warfile="${build.dir}/antBuild/antTs.war" basedir="${build.dir}" webxml="${build.web.dir}/web.xml">
+		<war warfile="${build.dir}/antBuild/test.war" basedir="${build.dir}" webxml="${build.web.dir}/web.xml">
 		</war>
 		<echo message="开始部署BID系统到服务器上" />
-		<copy file="${build.dir}/antBuild/antTs.war" todir="${tomcat-root}/webapps" />
+		<copy file="${build.dir}/antBuild/test.war" todir="${tomcat-root}/webapps" />
 		<echo message="停止tomcat服务器" />
 		<exec executable="${tomcat-root}/bin/shutdown.bat" />
 		<echo message="启动tomcat服务器" />
